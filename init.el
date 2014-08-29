@@ -1,9 +1,11 @@
 (require 'package)
 (setq package-user-dir "~/.emacs.d/elpa/")
+(setq ls-lisp-use-insert-directory-program nil)
 
 (package-initialize)
-(add-to-list 'package-archives
-	     '("melpa" . "http://melpa.milkbox.net/packages/") t)
+(setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
+			 ("marmalade" . "http://marmalade-repo.org/packages")
+			 ("melpa" . "http://melpa.milkbox.net/packages/")))
 (add-to-list 'load-path "~/.emacs.d/manual/")
 (add-to-list 'load-path "~/.emacs.d/etc/")
 
@@ -12,6 +14,7 @@
       '(
     "/usr/local/bin"
     "/usr/bin"
+    "/bin"
     ))
 
 (when (not package-archive-contents)
@@ -27,6 +30,11 @@
 
 (require 'rainbow-delimiters)
 (global-rainbow-delimiters-mode)
+
+(require 'multiple-cursors)
+(global-set-key (kbd "C->") 'mc/mark-next-like-this)
+(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+(global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
 
 (require 'column-marker)
 (add-hook 'prog-mode-hook (lambda () (interactive) (column-marker-1 80)))
