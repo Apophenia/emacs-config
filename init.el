@@ -21,7 +21,7 @@
 
 (load-theme 'deeper-blue t)
 
-(setq x-Caps_Lock-keysym 'meta)
+(set-face-attribute 'default nil :height 160)
 
 (require 'flymake-jshint)
 (add-hook 'javascript-mode-hook
