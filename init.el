@@ -1,67 +1,164 @@
-(require 'package)
-(setq package-user-dir "~/.emacs.d/elpa/")
-(setq ls-lisp-use-insert-directory-program nil)
+;;; init.el --- lyndsey's init file
 
-(package-initialize)
-(setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
-			 ("melpa" . "http://melpa.milkbox.net/packages/")))
-(add-to-list 'load-path "~/.emacs.d/manual/")
-(add-to-list 'load-path "~/.emacs.d/etc/")
+;; Turn off mouse wheel interface to accomodate cheeky Apple mouse
+(when window-system
+  (mouse-wheel-mode -1))
 
+;; Byebye splash screen
+(setq inhibit-splash-screen t)
+
+;;----------------------------------------------------------------------------
+;;-- package initialization
+;;----------------------------------------------------------------------------
+
+;; Help emacs find node
 (setenv "PATH" (concat "/usr/local/bin:" (getenv "PATH")))
 (setq exec-path
       '(
-    "/usr/local/bin"
-    "/usr/bin"
-    "/bin"
-    ))
+	"/usr/local/bin"
+	"/usr/bin"
+	    ))
+
+;; MEPLA and Marmalade
+(require 'package)
+(setq package-user-dir "~/.emacs.d/elpa/")
+(add-to-list 'package-archives
+	     '("melpa" . "http://melpa.milkbox.net/packages/") t)
+(add-to-list 'package-archives
+	     '("marmalade" . "http://marmalade-repo.org/packages/") t)
+(package-initialize)
 
 (when (not package-archive-contents)
-  (package-refresh-contents))
+    (package-refresh-contents))
 
-(load-theme 'deeper-blue t)
 
-(set-face-attribute 'default nil :height 160)
+;;----------------------------------------------------------------------------
+;;-- packages.list
+;;----------------------------------------------------------------------------
 
-(require 'flymake-jshint)
-(add-hook 'javascript-mode-hook
-	  (lambda () (flymake-mode t)))
+(defvar ly/packages
+  '(;; language modes
+    clojure-mode
+    markdown-mode
+    web-mode
+    js2-mode
+    
+    ;; autocompletion
+    auto-complete
+    ac-js2
+    
+    ;; visual indicator for long lines
+    column-marker
 
-(require 'rainbow-delimiters)
-(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+    ;; ☆ magical interface☆ for Git through Emacs
+    magit
 
-(require 'multiple-cursors)
+    ;; nested delimiters (parens, brackets, etc.) are colored differently
+    rainbow-delimiters))
+
+(defun ly/install-packages ()
+  "install uninstalled packages"
+  (interactive)
+  (dolist (p ly/packages)
+    (when (not (package-installed-p p))
+      (package-install p))))
+
+(ly/install-packages)
+
+;;----------------------------------------------------------------------------
+;;-- general config
+;;---------------------------------------------------------------------------- 
+
+;; theme
+;; (load-theme 'deeper-blue t)
+
+;; set all coding systems to utf-8
+(set-language-environment 'utf-8)
+(set-default-coding-systems 'utf-8)
+(setq locale-coding-system 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-selection-coding-system 'utf-8)
+(prefer-coding-system 'utf-8)
+
+;;----------------------------------------------------------------------------
+;;-- custom emacs behavioral settings and overrides
+;;----------------------------------------------------------------------------
+
+;; turn off alert bell so I don't drive Nadine crazy
+(setq visible-bell t)
+
+;; for the love of everything stop switching between y/n and yes/no prompt
+(fset 'yes-or-no-p 'y-or-n-p)
+
+;; display column number
+(setq column-number-mode t)
+
+;; scratch buffer text should not be small novel
+(setq initial-scratch-message ";; scratch
+")
+
+;; underline matching parentheses when the cursor highlights 'em
+(show-paren-mode 1)
+(setq-default show-paren-style 'parentheses)
+(set-face-attribute 'show-paren-match-face nil
+		    :weight 'bold
+		    :underline nil
+		    :background nil
+		    :foreground nil
+		    :inverse-video t)
+
+;; emacs, put these.files~ somewhere else
+(setq backup-directory-alist `(("." . ,(expand-file-name "~/.emacs.d/backups/"))))
+
+;; and #these.files#, while you're at it
+(setq auto-save-file-name-transforms
+            `((".*" ,(expand-file-name "~/.emacs.d/backups/"))))
+
+;;----------------------------------------------------------------------------
+;;-- package-specific hooks and custom variables
+;;----------------------------------------------------------------------------
+
+;; highlight column 80
+(add-hook 'prog-mode-hook (lambda () (interactive) (column-marker-1 80)))
+
+;; flycheck
+(add-hook 'after-init-hook #'global-flycheck-mode)
+
+;; add keybindings for multiple-cursors
+(global-set-key (kbd "C-c C-S-c") 'mc/edit-lines)
 (global-set-key (kbd "C->") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
 (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
 
-(require 'column-marker)
-(add-hook 'prog-mode-hook (lambda () (interactive) (column-marker-1 80)))
-
-(require 'web-mode) (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
+;; web mode for n filetypes: because sometimes your html... isn't
+(add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.[gj]sp\\'" . web-mode)) 
-(add-to-list 'auto-mode-alist '("\\.as[cp]x\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)) 
+(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.handlebars\\'" . web-mode))
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(inhibit-startup-screen t))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(rainbow-delimiters-depth-1-face ((t (:foreground "yellow"))))
- '(rainbow-delimiters-depth-2-face ((t (:foreground "cadet blue"))))
- '(rainbow-delimiters-depth-3-face ((t (:foreground "light coral"))))
- '(rainbow-delimiters-depth-5-face ((t (:foreground "orange"))))
- '(rainbow-delimiters-depth-6-face ((t (:foreground "yellow"))))
- '(rainbow-delimiters-depth-7-face ((t (:foreground "cadet blue"))))
- '(rainbow-delimiters-depth-8-face ((t (:foreground "light coral")))))
+;; look under your chairs!! rainbow-delimiters for everyone!!!!
+(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+
+;; do after x is loaded
+(defmacro after (mode &rest body)
+  `(eval-after-load ,mode
+     '(progn ,@body)))
+
+;; set rainbow-delimiters colors to complement theme arbitrarily
+(defun dynamic-delimiters ()
+  (setq delimiter-faces '(rainbow-delimiters-depth-1-face
+			  rainbow-delimiters-depth-2-face
+			  rainbow-delimiters-depth-3-face))
+  (setq theme-faces '(font-lock-builtin-face
+		      font-lock-constant-face
+		      font-lock-type-face))
+  (while delimiter-faces
+    (set-face-attribute (car delimiter-faces) nil
+			:inherit (car theme-faces))
+    (setq delimiter-faces (cdr delimiter-faces))
+    (setq theme-faces (append (cdr theme-faces)(cons (car theme-faces)())))))
+
+(after 'rainbow-delimiters (dynamic-delimiters))
